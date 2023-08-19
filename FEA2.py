@@ -163,6 +163,28 @@ class Element:
         self.F_MSL = self.lamda.T @ self.f_MSL
         self.Q_MSL = self.Shape @ self.F_MSL
 
+    def getAxQUDL(self, p):
+        self.axf_UDL = p * np.array([[self.L/2],
+                                     [0],
+                                     [0],
+                                     [self.L/2],
+                                     [0],
+                                     [0]])
+        self.axF_UDL = self.lamda.T @ self.axf_UDL
+        self.axQ_UDL = self.Shape @ self.axF_UDL
+
+    def getAxQMSL(self, p, a):
+        self.axf_MSL = p * np.array([[1-(a/self.L)],
+                                     [0],
+                                     [0],
+                                     [a/self.L],
+                                     [0],
+                                     [0]])
+        self.axF_MSL = self.lamda.T @ self.axf_MSL
+        self.axQ_MSL = self.Shape @ self.axF_MSL
+        
+    
+
 
         
         
@@ -200,14 +222,20 @@ for i in range(numElements):
 Elements[0].getQUDL(0)
 Elements[0].getQLVL(0)
 Elements[0].getQMSL(0)
+Elements[0].getAxQUDL(0)
+Elements[0].getAxQMSL(0,0) #Second term is point along L where axial load is applied
 
 Elements[1].getQUDL(-10e3)
 Elements[1].getQLVL(0)
 Elements[1].getQMSL(-50e3)
+Elements[1].getAxQUDL(0)
+Elements[1].getAxQMSL(0,0)
 
 Elements[2].getQUDL(0)
 Elements[2].getQLVL(0)
 Elements[2].getQMSL(0)
+Elements[2].getAxQUDL(0)
+Elements[2].getAxQMSL(0,0)
 
 Q = np.array([[10e3],
               [0],
