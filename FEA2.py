@@ -17,33 +17,27 @@ def N3(x,L):
 def N4(x,L):
     return ((x**3/L**2) - (x**2 / L))
 
-
+    
 # Info on System 
 Shape1 = np.array([[0,0,0,1,0,0],
                    [0,0,0,0,1,0],
-                   [0,0,0,0,0,1],
-                   [0,0,0,0,0,0],
-                   [0,0,0,0,0,0],
-                   [0,0,0,0,0,0]])
+                   [0,0,0,0,0,1]])
 
 Shape2 = np.array([[1,0,0,0,0,0],
                    [0,1,0,0,0,0],
-                   [0,0,1,0,0,0],
-                   [0,0,0,1,0,0],
-                   [0,0,0,0,1,0],
-                   [0,0,0,0,0,1]])
-
-Shape3 = np.array([[0,0,0,0,0,0],
-                   [0,0,0,0,0,0],
-                   [0,0,0,0,0,0],
-                   [1,0,0,0,0,0],
-                   [0,1,0,0,0,0],
                    [0,0,1,0,0,0]])
 
-Shapes = [Shape1,Shape2,Shape3]
-Areas = [5e-4,5e-4,5e-4]
+#Shape3 = np.array([[0,0,0,0,0,0],
+#                   [0,0,0,0,0,0],
+#                   [0,0,0,0,0,0],
+#                   [1,0,0,0,0,0],
+#                   [0,1,0,0,0,0],
+#                   [0,0,1,0,0,0]])
+
+Shapes = [Shape1,Shape2]
+Areas = [6e-4,6e-4,6e-4]
 Es = [200e9,200e9,200e9]
-Is = [1e-5,1e-5, 1e-5]
+Is = [8e-6,8e-6, 8e-6]
 
 # Forces
 
@@ -196,9 +190,9 @@ Elements = [Element(Es[i], Areas[i], Is[i], Shapes[i]) for i in range(numElement
 
 
 # Element: (x,y), Length, Angle(deg)
-Elements[0].setNodes(0, 0, 3, 90)
-Elements[1].setNodes(0, 3, 4.5, 0)
-Elements[2].setNodes(4.5, 3, 3, -90)
+Elements[0].setNodes(0, 0, 5, 53.1)
+Elements[1].setNodes(3, 4, 4, -90)
+#Elements[2].setNodes(4.5, 3, 3, -90)
 
 
 # Fill Elements (BASED ON NODES and LOADING)
@@ -225,22 +219,19 @@ Elements[0].getQMSL(0)
 Elements[0].getAxQUDL(0)
 Elements[0].getAxQMSL(0,0) #Second term is point along L where axial load is applied
 
-Elements[1].getQUDL(-10e3)
-Elements[1].getQLVL(0)
-Elements[1].getQMSL(-50e3)
+Elements[1].getQUDL(0)
+Elements[1].getQLVL(-75e3)
+Elements[1].getQMSL(0)
 Elements[1].getAxQUDL(0)
 Elements[1].getAxQMSL(0,0)
 
-Elements[2].getQUDL(0)
-Elements[2].getQLVL(0)
-Elements[2].getQMSL(0)
-Elements[2].getAxQUDL(0)
-Elements[2].getAxQMSL(0,0)
+#Elements[2].getQUDL(0)
+#Elements[2].getQLVL(0)
+#Elements[2].getQMSL(0)
+#Elements[2].getAxQUDL(0)
+#Elements[2].getAxQMSL(0,0)
 
-Q = np.array([[10e3],
-              [0],
-              [0],
-              [10e3],
+Q = np.array([[0],
               [0],
               [0]])
 
@@ -331,10 +322,6 @@ for j in range(numElements):
 
     plt.plot(undefl_base_XG, undefl_base_YG, 'b--')
     plt.plot(deflected_XG, deflected_YG, 'r')
-    
+plt.grid(True)
+plt.axis('square')
 plt.show()
-
-
-
-
-
