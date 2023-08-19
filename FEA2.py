@@ -33,25 +33,33 @@ Shape2 = np.array([[1,0,0,0,0,0],
                    [0,0,0,0,1,0],
                    [0,0,0,0,0,1]])
 
-Shape3 = np.array([[0,0,0,1,0,0],
-                   [0,0,0,0,1,0],
-                   [0,0,0,0,0,1],
+Shape3 = np.array([[0,0,0,0,0,0],
                    [0,0,0,0,0,0],
                    [0,0,0,0,0,0],
-                   [0,0,0,0,0,0]])
+                   [1,0,0,0,0,0],
+                   [0,1,0,0,0,0],
+                   [0,0,1,0,0,0]])
 
 Shapes = [Shape1,Shape2,Shape3]
-Areas = [5e-5,5e-5,5e-5]
+Areas = [5e-4,5e-4,5e-4]
 Es = [200e9,200e9,200e9]
-Is = [2e-6,2e-6, 2e-6]
+Is = [1e-5,1e-5, 1e-5]
 
-# Force
-Q = np.array([[800],
-              [0],
-              [7500],
-              [-800],
-              [-1200],
-              [0]])
+# Forces
+
+
+# Uniform Distributed Load (UDL)
+# Beam in question:
+
+
+# Linearly Varying Load (LVL)
+
+
+
+# Mid-Span Load
+
+
+
 
 # Create Class
 class Element:
@@ -125,6 +133,37 @@ class Element:
         yDeflection = axial * np.sin(self.angleRad) + transverse * np.cos(self.angleRad)
         return xDeflection,yDeflection
 
+    def getQUDL(self, w):
+        self.f_UDL = np.array([[0],
+                      [(w*self.L)/2],
+                      [(w*self.L**2)/12],
+                      [0],
+                      [(w*self.L)/2],
+                      [(-w*self.L**2)/12]])
+        self.F_UDL = self.lamda.T @ self.f_UDL
+        self.Q_UDL = self.Shape @ self.F_UDL
+    
+    def getQLVL(self, w):
+        self.f_LVL = np.array([[0],
+                               [3*w*self.L / 20],
+                               [w*self.L**2 / 30],
+                               [0],
+                               [7*w*self.L / 20],
+                               [-w*self.L**2 / 20]])
+        self.F_LVL = self.lamda.T @ self.f_LVL
+        self.Q_LVL = self.Shape @ self.F_LVL
+
+    def getQMSL(self, w):
+        self.f_MSL = np.array([[0],
+                               [w/2],
+                               [w*self.L/8],
+                               [0],
+                               [w/2],
+                               [-w*self.L/8]])
+        self.F_MSL = self.lamda.T @ self.f_MSL
+        self.Q_MSL = self.Shape @ self.F_MSL
+
+
         
         
         
@@ -135,9 +174,10 @@ Elements = [Element(Es[i], Areas[i], Is[i], Shapes[i]) for i in range(numElement
 
 
 # Element: (x,y), Length, Angle(deg)
-Elements[0].setNodes(0, 0, 4, 0)
-Elements[1].setNodes(4, 0, 4, 0)
-Elements[2].setNodes(0, -3, 5, 36.9)
+Elements[0].setNodes(0, 0, 3, 90)
+Elements[1].setNodes(0, 3, 4.5, 0)
+Elements[2].setNodes(4.5, 3, 3, -90)
+
 
 # Fill Elements (BASED ON NODES and LOADING)
 for i in range(numElements):
@@ -151,9 +191,36 @@ for i in range(numElements):
         overallKG += Elements[i].kGe
         #print("Add to KG")
     
+    
+    
+# Calculate Q from Nodal, UDL, MSL, LVL
+
+# Loads
+
+Elements[0].getQUDL(0)
+Elements[0].getQLVL(0)
+Elements[0].getQMSL(0)
+
+Elements[1].getQUDL(-10e3)
+Elements[1].getQLVL(0)
+Elements[1].getQMSL(-50e3)
+
+Elements[2].getQUDL(0)
+Elements[2].getQLVL(0)
+Elements[2].getQMSL(0)
+
+Q = np.array([[10e3],
+              [0],
+              [0],
+              [10e3],
+              [0],
+              [0]])
+
+for i in range(numElements):
+    Q = Q + Elements[i].Q_UDL + Elements[i].Q_LVL + Elements[i].Q_MSL
+
+
 # Calculate overall Quantities
-
-
 q = sp.linalg.solve(overallKG, Q)
 
 # Get Info on Each Element
@@ -201,7 +268,7 @@ for i in range(numElements):
 #     #print()
 
 N_points = 40
-disp_multi = 50
+disp_multi = 30
 for j in range(numElements):
     transverse = Elements[j].transverseDeflection(Elements[j].L ,d)
     axial = Elements[j].axialDeflection(Elements[j].L,d)
@@ -235,7 +302,7 @@ for j in range(numElements):
     deflected_YG = undefl_base_YG + disp_multi * defl_YG
 
     plt.plot(undefl_base_XG, undefl_base_YG, 'b--')
-    plt.plot(deflected_XG, deflected_YG, 'r--')
+    plt.plot(deflected_XG, deflected_YG, 'r')
     
 plt.show()
 
