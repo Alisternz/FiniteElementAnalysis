@@ -19,25 +19,43 @@ def N4(x,L):
 
     
 # Info on System 
-Shape1 = np.array([[0,0,0,1,0,0],
+Shape2 = np.array([[1,0,0,0,0,0],
+                   [0,1,0,0,0,0],
+                   [0,0,1,0,0,0],
+                   [0,0,0,1,0,0],
                    [0,0,0,0,1,0],
                    [0,0,0,0,0,1]])
 
-Shape2 = np.array([[1,0,0,0,0,0],
+Shape3 = np.array([[0,0,0,0,0,0],
+                   [0,0,0,0,0,0],
+                   [0,0,0,0,0,0],
+                   [1,0,0,0,0,0],
                    [0,1,0,0,0,0],
                    [0,0,1,0,0,0]])
 
-#Shape3 = np.array([[0,0,0,0,0,0],
-#                   [0,0,0,0,0,0],
-#                   [0,0,0,0,0,0],
-#                   [1,0,0,0,0,0],
-#                   [0,1,0,0,0,0],
-#                   [0,0,1,0,0,0]])
 
-Shapes = [Shape1,Shape2]
-Areas = [6e-4,6e-4,6e-4]
-Es = [200e9,200e9,200e9]
-Is = [8e-6,8e-6, 8e-6]
+Shape1 = np.array([[1,0,0,0,0,0],
+                    [0,1,0,0,0,0],
+                    [0,0,1,0,0,0],
+                    [0,0,0,0,0,0],
+                    [0,0,0,0,0,0],
+                    [0,0,0,0,0,0]])
+
+
+# Shape4 = np.array([[0,0,0,0,0,0],
+#                    [0,0,0,0,0,0],
+#                    [0,0,0,0,0,0],
+#                    [0,0,0,0,0,0],
+#                    [0,0,0,0,0,0],
+#                    [0,0,0,0,0,0],
+#                    [1,0,0,0,0,0],
+#                    [0,1,0,0,0,0],
+#                    [0,0,1,0,0,0]])
+
+Shapes = [Shape1,Shape2, Shape3]
+Areas = [8e-4,8e-4, 8e-4,8e-4]
+Es = [200e9,200e9,200e9,200e9]
+Is = [9e-6,9e-6,9e-6,9e-6]
 
 # Forces
 
@@ -109,10 +127,11 @@ class Element:
     def getkGE(self):
         self.kGe = self.Shape @ self.kHat @ self.Shape.T
 
-    def updateValues(self, F, D, d):
+    def updateValues(self,f, F, D, d):
         self.F = F
         self.D = D
         self.d = d
+        self.f = Elements[i].K @ Elements[i].d
     
     def transverseDeflection(self, x, d):
         transverse = d[1][0]*N1(x, self.L) + d[2][0]*N2(x, self.L) + d[4][0]*N3(x, self.L) + d[5][0]*N4(x, self.L)
@@ -190,8 +209,11 @@ Elements = [Element(Es[i], Areas[i], Is[i], Shapes[i]) for i in range(numElement
 
 
 # Element: (x,y), Length, Angle(deg)
-Elements[0].setNodes(0, 0, 5, 53.1)
-Elements[1].setNodes(3, 4, 4, -90)
+Elements[0].setNodes(0, 2, 2, -90)
+Elements[1].setNodes(0, 2, 2, 0)
+Elements[2].setNodes(2, 2, 2.83, -135)
+# Elements[3].setNodes(11.9, 4.33, 5, -60)
+
 #Elements[2].setNodes(4.5, 3, 3, -90)
 
 
@@ -214,16 +236,30 @@ for i in range(numElements):
 # Loads
 
 Elements[0].getQUDL(0)
-Elements[0].getQLVL(0)
+Elements[0].getQLVL(78.42e3)
 Elements[0].getQMSL(0)
 Elements[0].getAxQUDL(0)
 Elements[0].getAxQMSL(0,0) #Second term is point along L where axial load is applied
 
-Elements[1].getQUDL(0)
-Elements[1].getQLVL(-75e3)
+Elements[1].getQUDL(-12e3)
+Elements[1].getQLVL(0)
 Elements[1].getQMSL(0)
 Elements[1].getAxQUDL(0)
 Elements[1].getAxQMSL(0,0)
+
+Elements[2].getQUDL(0)
+Elements[2].getQLVL(0)
+Elements[2].getQMSL(0)
+Elements[2].getAxQUDL(0)
+Elements[2].getAxQMSL(0,0)
+
+# Elements[3].getQUDL(0)
+# Elements[3].getQLVL(0)
+# Elements[3].getQMSL(0)
+# Elements[3].getAxQUDL(0)
+# Elements[3].getAxQMSL(0,0)
+
+
 
 #Elements[2].getQUDL(0)
 #Elements[2].getQLVL(0)
@@ -232,6 +268,9 @@ Elements[1].getAxQMSL(0,0)
 #Elements[2].getAxQMSL(0,0)
 
 Q = np.array([[0],
+              [0],
+              [0],
+              [0],
               [0],
               [0]])
 
@@ -245,6 +284,7 @@ q = sp.linalg.solve(overallKG, Q)
 # Get Info on Each Element
 for i in range(numElements):
     F = Elements[i].kHat @ Elements[i].Shape.T @ q
+    f = Elements[i].lamda @ F
     print(f"Element {i}: {F}")
     # print(f"Element {i} Angle(Degs): {Elements[i].angleDeg}")
     # print(f"Element {i} Angle(Rads): {Elements[i].angleRad}")
@@ -256,7 +296,7 @@ for i in range(numElements):
     D = Elements[i].Shape.T @ q
     d = Elements[i].lamda @ D
     
-    Elements[i].updateValues(F, D, d)
+    Elements[i].updateValues(f, F, D, d)
     print(f"{Elements[i].d} Deflection OF ELEMENT {i}")
 # print(f"q: {q}")
 #print(overallKG, Q)
@@ -322,6 +362,6 @@ for j in range(numElements):
 
     plt.plot(undefl_base_XG, undefl_base_YG, 'b--')
     plt.plot(deflected_XG, deflected_YG, 'r')
-plt.grid(True)
 plt.axis('square')
+plt.grid(True)
 plt.show()
