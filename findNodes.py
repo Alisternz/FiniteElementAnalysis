@@ -8,7 +8,7 @@ def findNextNode(x, y, length, angle):
 
 
 def main():
-    print(findNextNode(0,0,5,53.13))
+    print(findNextNode(2,1,143.13))
 
 
 main()

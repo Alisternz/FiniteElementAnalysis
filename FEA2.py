@@ -17,8 +17,15 @@ def N3(x,L):
 def N4(x,L):
     return ((x**3/L**2) - (x**2 / L))
 
-    
+
 # Info on System 
+Shape1 = np.array([[0,0,0,1,0,0],
+                   [0,0,0,0,1,0],
+                   [0,0,0,0,0,1],
+                   [0,0,0,0,0,0],
+                   [0,0,0,0,0,0],
+                   [0,0,0,0,0,0]])
+
 Shape2 = np.array([[1,0,0,0,0,0],
                    [0,1,0,0,0,0],
                    [0,0,1,0,0,0],
@@ -26,21 +33,12 @@ Shape2 = np.array([[1,0,0,0,0,0],
                    [0,0,0,0,1,0],
                    [0,0,0,0,0,1]])
 
-Shape3 = np.array([[0,0,0,0,0,0],
-                   [0,0,0,0,0,0],
-                   [0,0,0,0,0,0],
-                   [1,0,0,0,0,0],
+Shape3 = np.array([[1,0,0,0,0,0],
                    [0,1,0,0,0,0],
-                   [0,0,1,0,0,0]])
-
-
-Shape1 = np.array([[1,0,0,0,0,0],
-                    [0,1,0,0,0,0],
-                    [0,0,1,0,0,0],
-                    [0,0,0,0,0,0],
-                    [0,0,0,0,0,0],
-                    [0,0,0,0,0,0]])
-
+                   [0,0,1,0,0,0],
+                   [0,0,0,0,0,0],
+                   [0,0,0,0,0,0],
+                   [0,0,0,0,0,0]])
 
 # Shape4 = np.array([[0,0,0,0,0,0],
 #                    [0,0,0,0,0,0],
@@ -53,9 +51,9 @@ Shape1 = np.array([[1,0,0,0,0,0],
 #                    [0,0,1,0,0,0]])
 
 Shapes = [Shape1,Shape2, Shape3]
-Areas = [8e-4,8e-4, 8e-4,8e-4]
+Areas = [3e-4,3e-4, 3e-4,3e-4]
 Es = [200e9,200e9,200e9,200e9]
-Is = [9e-6,9e-6,9e-6,9e-6]
+Is = [4.5e-6,4.5e-6,4.5e-6,4.5e-6]
 
 # Forces
 
@@ -92,7 +90,7 @@ class Element:
 
 
     def getTransformationMatrix(self):
-        self.DOF = int(input("How many Degrees of Freedom; "))
+        self.DOF = 6
         if (self.DOF == 4):
             k = (self.E * self.A) / self.L
             self.transformationMatrix = np.array([[1, -1], [-1, 1]])
@@ -176,6 +174,16 @@ class Element:
         self.F_MSL = self.lamda.T @ self.f_MSL
         self.Q_MSL = self.Shape @ self.F_MSL
 
+    def movedPointLoad(self, f, a):
+        self.f_MPL = f * np.array([[0],
+                                     [1-3*(a**2/self.L**2)+2*(a**3/self.L**3)],
+                                     [(a**3 / self.L**2) - 2*(a**2/self.L)+a],
+                                     [0],
+                                     [3*(a**2/self.L**2)-2*(a**3/self.L**2)],
+                                     [(a**3/self.L**2)-(a**2/self.L)]])
+        self.F_MPL = self.lamda.T @ self.f_MPL
+        self.Q_MPL = self.Shape @ self.F_MPL
+
     def getAxQUDL(self, p):
         self.axf_UDL = p * np.array([[self.L/2],
                                      [0],
@@ -197,6 +205,7 @@ class Element:
         self.axQ_MSL = self.Shape @ self.axF_MSL
         
     
+    
 
 
         
@@ -204,17 +213,15 @@ class Element:
         
 
 # Initialise Elements
-numElements = int(input("Number of Elements: "))
+numElements = len(Shapes)
 Elements = [Element(Es[i], Areas[i], Is[i], Shapes[i]) for i in range(numElements)]
 
 
 # Element: (x,y), Length, Angle(deg)
-Elements[0].setNodes(0, 2, 2, -90)
-Elements[1].setNodes(0, 2, 2, 0)
-Elements[2].setNodes(2, 2, 2.83, -135)
-# Elements[3].setNodes(11.9, 4.33, 5, -60)
-
-#Elements[2].setNodes(4.5, 3, 3, -90)
+Elements[0].setNodes(0, 0, 1.5, 0)
+Elements[1].setNodes(1.5,0, 2, 15)
+Elements[2].setNodes(1.5, 0 , 2.5, -100)
+#Elements[3].setNodes(11.9, 4.33, 5, -60)
 
 
 # Fill Elements (BASED ON NODES and LOADING)
@@ -236,36 +243,33 @@ for i in range(numElements):
 # Loads
 
 Elements[0].getQUDL(0)
-Elements[0].getQLVL(78.42e3)
+Elements[0].getQLVL(0)
 Elements[0].getQMSL(0)
+Elements[0].movedPointLoad(0, 0) #Second term is point along L where axial load is applied (from Node 1)
 Elements[0].getAxQUDL(0)
-Elements[0].getAxQMSL(0,0) #Second term is point along L where axial load is applied
+Elements[0].getAxQMSL(0,0) #Second term is point along L where axial load is applied (from Node 1)
 
-Elements[1].getQUDL(-12e3)
+Elements[1].getQUDL(-96593)
 Elements[1].getQLVL(0)
 Elements[1].getQMSL(0)
-Elements[1].getAxQUDL(0)
+Elements[1].movedPointLoad(0, 0) #Second term is point along L where axial load is applied (from Node 1)
+Elements[1].getAxQUDL(-25882)
 Elements[1].getAxQMSL(0,0)
 
 Elements[2].getQUDL(0)
 Elements[2].getQLVL(0)
 Elements[2].getQMSL(0)
+Elements[2].movedPointLoad(0, 0) #Second term is point along L where axial load is applied (from Node 1)
 Elements[2].getAxQUDL(0)
 Elements[2].getAxQMSL(0,0)
 
 # Elements[3].getQUDL(0)
 # Elements[3].getQLVL(0)
 # Elements[3].getQMSL(0)
+# Elements[3].movedPointLoad(0, 0) #Second term is point along L where axial load is applied (from Node 1)
 # Elements[3].getAxQUDL(0)
 # Elements[3].getAxQMSL(0,0)
 
-
-
-#Elements[2].getQUDL(0)
-#Elements[2].getQLVL(0)
-#Elements[2].getQMSL(0)
-#Elements[2].getAxQUDL(0)
-#Elements[2].getAxQMSL(0,0)
 
 Q = np.array([[0],
               [0],
@@ -285,7 +289,7 @@ q = sp.linalg.solve(overallKG, Q)
 for i in range(numElements):
     F = Elements[i].kHat @ Elements[i].Shape.T @ q
     f = Elements[i].lamda @ F
-    print(f"Element {i}: {F}")
+    #print(f"Element {i}: {F}")
     # print(f"Element {i} Angle(Degs): {Elements[i].angleDeg}")
     # print(f"Element {i} Angle(Rads): {Elements[i].angleRad}")
     # print(f"Element {i} K: {Elements[i].K}")
@@ -297,7 +301,7 @@ for i in range(numElements):
     d = Elements[i].lamda @ D
     
     Elements[i].updateValues(f, F, D, d)
-    print(f"{Elements[i].d} Deflection OF ELEMENT {i}")
+    #print(f"{Elements[i].d} Deflection OF ELEMENT {i}")
 # print(f"q: {q}")
 #print(overallKG, Q)
 
@@ -327,11 +331,11 @@ for i in range(numElements):
 #     #print()
 
 N_points = 40
-disp_multi = 30
+disp_multi = 5
 for j in range(numElements):
     transverse = Elements[j].transverseDeflection(Elements[j].L ,d)
     axial = Elements[j].axialDeflection(Elements[j].L,d)
-    print(Elements[j].d[1][0], "hi")
+    #print(Elements[j].d[1][0], "hi")
     xDeflection, yDeflection = Elements[j].totalDeflection(transverse, axial)
     node1XG = Elements[j].x1
     node1YG = Elements[j].y1
